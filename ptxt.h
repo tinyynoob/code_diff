@@ -1,9 +1,10 @@
+#include <stdint.h>
 #include <stdio.h>  // FILE
 
 struct ptxt {  // plain text
     int line;
-    char **text;  // contains '\n'
-    int *hash;    // hash each line
+    char **text;     // contains '\n'
+    uint32_t *hash;  // hash each line
 };
 
 /* operations:
@@ -25,4 +26,4 @@ struct dp *ptxt_distance(struct ptxt *old, struct ptxt *new);
 void ptxt_destroy(struct ptxt *p);
 void dp_generate_ops(struct dp *dp, struct ptxt *old, struct ptxt *new);
 void dp_destroy(struct dp *dp);
-int str_hash(const char *s);
+uint32_t str_hash(const char *s);

@@ -1,5 +1,6 @@
 #include "ptxt.h"
 #include <pthread.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>  // strlen
@@ -20,12 +21,18 @@ static inline void replace_endl(char *s)
     s[i] = '\0';
 }
 
-// not serious yet
-int str_hash(const char *s)
+// may be choosed better
+uint32_t str_hash(const char *s)
 {
-    int ans = 0;
-    for (int i = 0; i < strlen(s); i++)
-        ans += s[i];
+    uint32_t ans = 0;
+    int len = strlen(s);
+    for (int i = 0; i < (len >> 2); i++) {
+        ans += ((uint32_t) s[i]) << 24 | (~(uint32_t) s[i + 1] << 16) |
+               (~(uint32_t) s[i + 2] << 8) | ((uint32_t) s[i + 3]);
+    }
+    for (int i = len & ~0x3u; i < len; i++)
+        ans -= s[i] << (7 * i);
+    ans ^= (uint32_t) s[len >> 1] << 19 | (uint32_t) s[len >> 5];
     return ans;
 }
 
@@ -44,7 +51,7 @@ void ptxt_init(const char *pathname)
     printf("I am %lu, my p->line is %d.\n", pthread_self(), p->line);
 #endif
     p->text = (char **) malloc(sizeof(char *) * p->line);
-    p->hash = (int *) malloc(sizeof(int) * p->line);
+    p->hash = (uint32_t *) malloc(sizeof(u_int32_t) * p->line);
 
     f = fopen(pathname, "r");
     for (int i = 0; i < p->line; i++) {

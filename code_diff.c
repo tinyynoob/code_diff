@@ -25,10 +25,10 @@ int main(int argc, char *argv[])
 #if DEBUG
     puts("old->hash:");
     for (int i = 0; i < old->line; i++)
-        printf("%d\n", old->hash[i]);
+        printf("%u\n", old->hash[i]);
     puts("new->hash:");
     for (int i = 0; i < new->line; i++)
-        printf("%d\n", new->hash[i]);
+        printf("%u\n", new->hash[i]);
 #endif
     struct dp *dp = ptxt_distance(old, new);
     dp_generate_ops(dp, old, new);

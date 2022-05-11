@@ -1,3 +1,32 @@
-qwer
-1234
-qwe
+
+    always @(RESET) begin
+        DEP_RDY <= 0;
+        PW_RDY <= 0;
+        RLC_RDY <= 0;
+    end
+
+    reg [4:0]counter;
+    always @(negedge CLK) begin
+        if (RESET)
+            counter <= 0;
+        // implicitly assume that KERNEL_VALID would be properly turned off
+        else if (KERNEL_VALID) begin
+            counter <= counter + 1;
+            /* ready half-cycle ahead */
+            DEP_RDY <= DEP_RDY | (counter == 23);   // counter would become 24 simultaneously
+            PW_RDY <= DEP_RDY;  // 1-cycle delay than DEP
+            RLC_RDY <= PW_RDY;  // 1-cycle delay than PW
+        end
+        else if (!IN_VALID) begin
+            if (counter) begin
+                counter <= counter - 1;
+                DEP_RDY <= DEP_RDY & !(counter == 1);   // counter would become 0 simultaneously
+                PW_RDY <= DEP_RDY;  // 1-cycle delay than DEP
+                RLC_RDY <= PW_RDY;  // 1-cycle delay than PW
+            end
+        end
+        else
+            counter <= counter;
+    end
+
+endmodule
