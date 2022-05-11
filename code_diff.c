@@ -30,8 +30,15 @@ int main(int argc, char *argv[])
     for (int i = 0; i < new->line; i++)
         printf("%d\n", new->hash[i]);
 #endif
-    printf("their distance is %d\n", ptxt_distance(old, new));
-
+    struct dp *dp = ptxt_distance(old, new);
+    dp_generate_ops(dp, old, new);
+#if DEBUG
+    puts("operations:");
+    for (int i = 0; dp->operations[i] != -1; i++)
+        printf("%hd ", dp->operations[i]);
+    putchar('\n');
+#endif
+    dp_destroy(dp);
     ptxt_destroy(old);
     ptxt_destroy(new);
     return 0;
