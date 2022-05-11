@@ -1,19 +1,15 @@
 #include "ptxt.h"
-#include <errno.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
-#define DEBUG 0
+#define DEBUG 1
 
-static inline int find_endl(const char *s)
-{
-    int ans = 0;
-    while (s[ans] != '\n')
-        ans++;
-    return ans;
-}
+#if DEBUG
+#include <errno.h>
+#endif
+
+#define min(a, b) ((a) < (b) ? (a) : (b))
 
 // not serious yet
 int str_hash(const char *s)
@@ -47,19 +43,44 @@ void ptxt_init(const char *path)
         p->text[i] = NULL;
         ssize_t ret =
             getline(&p->text[i], &n, f);  // getline() auto allocates space
-#if DEBUG
-        char errbuf[100];
-        strerror_r(ENOMEM, errbuf, 100);
-        if (ret == -1)
-            perror(errbuf);
-        strerror_r(EINVAL, errbuf, 100);
-        if (ret == -1)
-            perror(errbuf);
-#endif
         p->hash[i] = str_hash(p->text[i]);
     }
     fclose(f);
     pthread_exit(p);
+}
+
+/* Compute the distance between two ptxts.
+ * Only insertion and deletion are allowed.
+ */
+int ptxt_distance(struct ptxt *old, struct ptxt *new)
+{
+    int **dp = (int **) malloc(sizeof(int *) * (old->line + 1));
+    for (int i = 0; i <= old->line; i++) {
+        dp[i] = (int *) malloc(sizeof(int) * (new->line + 1));
+        dp[i][0] = i;
+    }
+    for (int i = 0; i <= new->line; i++)
+        dp[0][i] = i;
+
+    for (int i = 1; i <= old->line; i++) {
+        for (int j = 1; j <= new->line; j++) {
+            if (old->hash[i - 1] ==
+                new->hash[j - 1])  // if texts in the two line are identical
+                dp[i][j] = dp[i - 1][j - 1];
+            else
+                dp[i][j] = min(dp[i - 1][j], dp[i][j - 1]) + 1;
+        }
+    }
+#if DEBUG
+    puts("dp table:");
+    for (int i = 0; i <= old->line; i++) {
+        for (int j = 0; j <= new->line; j++)
+            printf("%d ", dp[i][j]);
+        putchar('\n');
+    }
+#endif
+    // return dp?
+    return dp[old->line][new->line];
 }
 
 void ptxt_destroy(struct ptxt *p)

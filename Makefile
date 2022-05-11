@@ -2,6 +2,7 @@ cc = gcc
 ccflags = -pthread
 
 .PHONY: run format
+
 run: code_edit_distance
 	./code_edit_distance old.txt new.txt
 
