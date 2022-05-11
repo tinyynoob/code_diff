@@ -3,12 +3,12 @@ ccflags = -pthread
 
 .PHONY: run format
 
-run: code_edit_distance
-	./code_edit_distance old.txt new.txt
+run: code_diff
+	./code_diff old.txt new.txt
 
-format: code_edit_distance.c ptxt.c ptxt.h
+format: code_diff.c ptxt.c ptxt.h
 	clang-format -i $^
 
-code_edit_distance: code_edit_distance.c ptxt.c
+code_diff: code_diff.c ptxt.c
 	$(cc) -o $@ $^ $(ccflags)
 
