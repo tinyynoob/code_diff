@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include "ptxt.h"
 
-#define DEBUG 1
+#define DEBUG 0
 
 int main(int argc, char *argv[])
 {
@@ -38,6 +38,7 @@ int main(int argc, char *argv[])
         printf("%hd ", dp->operations[i]);
     putchar('\n');
 #endif
+    print_result(old, new, dp);
     dp_destroy(dp);
     ptxt_destroy(old);
     ptxt_destroy(new);

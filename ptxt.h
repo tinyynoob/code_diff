@@ -21,9 +21,10 @@ struct dp {
     short *operations;
 };
 
+uint32_t str_hash(const char *s);
 void ptxt_init(const char *pathname);
 struct dp *ptxt_distance(struct ptxt *old, struct ptxt *new);
 void ptxt_destroy(struct ptxt *p);
 void dp_generate_ops(struct dp *dp, struct ptxt *old, struct ptxt *new);
 void dp_destroy(struct dp *dp);
-uint32_t str_hash(const char *s);
+void print_result(struct ptxt *old, struct ptxt *new, struct dp *dp);

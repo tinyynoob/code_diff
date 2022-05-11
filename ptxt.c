@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>  // strlen
 
-#define DEBUG 1
+#define DEBUG 0
 
 #if DEBUG
 #include <errno.h>
@@ -162,4 +162,21 @@ void ptxt_destroy(struct ptxt *p)
     free(p->text);
     free(p->hash);
     free(p);
+}
+
+void print_result(struct ptxt *old, struct ptxt *new, struct dp *dp)
+{
+    puts("\033[0m================================================================================");
+    int lidx1 = 0, lidx2 = 0;   // line index
+    for (int i = 0; dp->operations[i] != -1; i++) {
+        if (dp->operations[i] == 0) {
+            printf("\033[0m  |%s\n", old->text[lidx1++]);
+            lidx2++;
+        } else if (dp->operations[i] == 1) {
+            printf("\033[0;32m+ |%s\n", new->text[lidx2++]);
+        } else if (dp->operations[i] == 2) {
+            printf("\033[0;31m- |%s\n", old->text[lidx1++]);
+        }
+    }
+    puts("\033[0m================================================================================");
 }
