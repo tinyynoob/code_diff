@@ -3,22 +3,59 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>  // strlen and strdup
+#include <string.h>  // strdup
 
 #define DEBUG 0
-
 #if DEBUG
 #include <errno.h>
 #endif
 
+
 #define min(a, b) ((a) < (b) ? (a) : (b))
+#define strlen(s) mystrlen(s)
+
+#define UNALIGNED32(X) ((uint32_t)(X) & (sizeof(uint32_t) - 1))
+#define DETECT_NULL(X) (((X) -0x01010101) & ~(X) &0x80808080)
+
+static inline size_t mystrlen(const char *s)
+{
+    size_t d = 0;
+    while (UNALIGNED32(s + d)) {
+        if (s[d])
+            d++;
+        else
+            return d;
+    }
+    uint32_t word = *(uint32_t *) (s + d);
+    while (!DETECT_NULL(word)) {
+        d += 4;
+        word = *(uint32_t *) (s + d);
+    }
+    while (s[d])
+        d++;
+    return d;
+}
 
 static inline void replace_endl(char *s)
 {
-    int i = 0;
-    while (s[i] != '\n' && s[i] != '\0')
-        i++;
-    s[i] = '\0';
+    int d = 0;
+    while (UNALIGNED32(s + d)) {
+        if (s[d] == '\n' || s[d] == '\0') {
+            s[d] = '\0';
+            return;
+        } else {
+            d++;
+        }
+    }
+    const uint32_t mask = 0x20202020;  // 4 space
+    uint32_t word = *(uint32_t *) (s + d);
+    while (!DETECT_NULL(word) && !DETECT_NULL(word ^ mask)) {
+        d += 4;
+        word = *(uint32_t *) (s + d);
+    }
+    while (s[d] != '\n' && s[d] != '\0')
+        d++;
+    s[d] = '\0';
 }
 
 // may be choosed better
@@ -27,12 +64,13 @@ uint32_t str_hash(const char *s)
     uint32_t ans = 0;
     int len = strlen(s);
     for (int i = 0; i < (len >> 2); i++) {
-        ans += ((uint32_t) s[i]) << 24 | (~(uint32_t) s[i + 1] << 16) |
-               (~(uint32_t) s[i + 2] << 8) | ((uint32_t) s[i + 3]);
+        ans += (((uint32_t) s[i]) << 24) | (((uint32_t) ~s[i + 1]) << 16) |
+               (((uint32_t) ~s[i + 2]) << 8) | ((uint32_t) s[i + 3]);
     }
     for (int i = len & ~0x3u; i < len; i++)
         ans -= s[i] << (7 * i);
-    ans ^= (uint32_t) s[len >> 1] << 19 | (uint32_t) s[len >> 5];
+    ans ^= (uint32_t) s[len >> 2] << 29 | (uint32_t) s[len >> 1] << 19 |
+           (uint32_t) s[len >> 5];
     return ans;
 }
 
@@ -189,8 +227,10 @@ void print_result(struct ptxt *old, struct ptxt *new, struct dp *dp)
 {
     printf("\nFrom %s to %s:\n", old->pathname, new->pathname);
     printf("The distance is %d.\n", dp->distance);
-    puts("\033[0m================================================================================");
-    int lidx1 = 0, lidx2 = 0;   // line index
+    puts(
+        "\033[0m==============================================================="
+        "=================");
+    int lidx1 = 0, lidx2 = 0;  // line index
     for (int i = 0; dp->operations[i] != -1; i++) {
         if (dp->operations[i] == 0) {
             printf("\033[0m  |%s\n", old->text[lidx1++]);
@@ -201,5 +241,7 @@ void print_result(struct ptxt *old, struct ptxt *new, struct dp *dp)
             printf("\033[0;31m- |%s\n", old->text[lidx1++]);
         }
     }
-    puts("\033[0m================================================================================");
+    puts(
+        "\033[0m==============================================================="
+        "=================");
 }
