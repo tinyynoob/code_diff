@@ -32,6 +32,7 @@ int main(int argc, char *argv[])
 #endif
     struct dp *dp = ptxt_distance(old, new);
     dp_generate_ops(dp, old, new);
+    dp_free_table(dp);  // since the ops are generated, the table is useless.
 #if DEBUG
     puts("operations:");
     for (int i = 0; dp->operations[i] != -1; i++)
@@ -40,7 +41,10 @@ int main(int argc, char *argv[])
 #endif
     print_result(old, new, dp);
     dp_destroy(dp);
+    dp = NULL;
     ptxt_destroy(old);
+    old = NULL;
     ptxt_destroy(new);
+    new = NULL;
     return 0;
 }

@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>  // strlen
+#include <string.h>  // strlen and strdup
 
 #define DEBUG 0
 
@@ -38,8 +38,9 @@ uint32_t str_hash(const char *s)
 
 void ptxt_init(const char *pathname)
 {
-    FILE *f = fopen(pathname, "r");
     struct ptxt *p = (struct ptxt *) malloc(sizeof(struct ptxt));
+    p->pathname = strdup(pathname);
+    FILE *f = fopen(p->pathname, "r");
     p->line = 1;  // to contain the line with EOF
     int c;
     while ((c = fgetc(f)) != EOF) {
@@ -51,9 +52,9 @@ void ptxt_init(const char *pathname)
     printf("I am %lu, my p->line is %d.\n", pthread_self(), p->line);
 #endif
     p->text = (char **) malloc(sizeof(char *) * p->line);
-    p->hash = (uint32_t *) malloc(sizeof(u_int32_t) * p->line);
+    p->hash = (uint32_t *) malloc(sizeof(uint32_t) * p->line);
 
-    f = fopen(pathname, "r");
+    f = fopen(p->pathname, "r");
     for (int i = 0; i < p->line; i++) {
         size_t n = 0;
         p->text[i] = NULL;
@@ -146,17 +147,37 @@ void dp_generate_ops(struct dp *dp, struct ptxt *old, struct ptxt *new)
         dp->operations[k++] = -1;
 }
 
+void dp_free_table(struct dp *dp)
+{
+    if (!dp)
+        return;
+    if (dp->table) {
+        for (int i = 0; i < dp->row; i++)
+            free(dp->table[i]);
+        free(dp->table);
+    }
+    dp->table = NULL;
+}
+
 void dp_destroy(struct dp *dp)
 {
-    for (int i = 0; i < dp->row; i++)
-        free(dp->table[i]);
-    free(dp->table);
-    free(dp->operations);
+    if (!dp)
+        return;
+    if (dp->table) {
+        for (int i = 0; i < dp->row; i++)
+            free(dp->table[i]);
+        free(dp->table);
+    }
+    if (dp->operations)
+        free(dp->operations);
     free(dp);
 }
 
 void ptxt_destroy(struct ptxt *p)
 {
+    if (!p)
+        return;
+    free(p->pathname);
     for (int i = 0; i < p->line; i++)
         free(p->text[i]);
     free(p->text);
@@ -166,6 +187,8 @@ void ptxt_destroy(struct ptxt *p)
 
 void print_result(struct ptxt *old, struct ptxt *new, struct dp *dp)
 {
+    printf("\nFrom %s to %s:\n", old->pathname, new->pathname);
+    printf("The distance is %d.\n", dp->distance);
     puts("\033[0m================================================================================");
     int lidx1 = 0, lidx2 = 0;   // line index
     for (int i = 0; dp->operations[i] != -1; i++) {
