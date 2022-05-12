@@ -15,7 +15,7 @@
 #define strlen(s) mystrlen(s)
 
 #define UNALIGNED32(X) ((uint32_t)(uintptr_t)(X) & (sizeof(uint32_t) - 1))
-#define DETECT_NULL(X) (((X) -0x01010101) & ~(X) &0x80808080)
+#define DETECT_NULL(X) (((X) -0x01010101u) & ~(X) &0x80808080u)
 
 static inline size_t mystrlen(const char *s)
 {
@@ -49,7 +49,7 @@ static inline void replace_endl(char *s)
             d++;
         }
     }
-    const uint32_t mask = 0x20202020;  // 4 space
+    const uint32_t mask = 0x0A0A0A0Au;  // 4 newline character
     uint32_t word = *(uint32_t *) (s + d);
     while (!DETECT_NULL(word) && !DETECT_NULL(word ^ mask)) {
         d += 4;
