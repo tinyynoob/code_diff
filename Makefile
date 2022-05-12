@@ -1,5 +1,5 @@
 cc = gcc
-ccflags = -pthread
+ccflags = -pthread -O2
 source = code_diff.c ptxt.c
 header = ptxt.h
 

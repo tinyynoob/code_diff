@@ -64,15 +64,18 @@ static inline void replace_endl(char *s)
 uint32_t str_hash(const char *s)
 {
     uint32_t ans = 0;
-    int len = strlen(s);
-    for (int i = 0; i < (len >> 2); i++) {
-        ans += (((uint32_t) s[i]) << 24) | (((uint32_t) ~s[i + 1]) << 16) |
-               (((uint32_t) ~s[i + 2]) << 8) | ((uint32_t) s[i + 3]);
+    size_t len = strlen(s);
+    for (size_t i = 0; i < (len >> 2); i++) {
+        ans += ((uint32_t) s[4 * i] << 24) | ((uint32_t) ~s[4 * i + 2] << 16) |
+               ((uint32_t) ~s[4 * i + 1] << 8) | ((uint32_t) s[4 * i + 3]);
+        ans -= (uint32_t) s[4 * i + len & 3] << 21 | (ans & 0xFFu) << 5;
     }
-    for (int i = len & ~0x3u; i < len; i++)
+    for (size_t i = len & ~0x3u; i < len; i++) {
         ans -= s[i] << (7 * i);
+        ans = ans >> 16 | ans << 16;
+    }
     ans ^= (uint32_t) s[len >> 2] << 29 | (uint32_t) s[len >> 1] << 19 |
-           (uint32_t) s[len >> 5];
+           (uint32_t) s[len >> 6];
     return ans;
 }
 
@@ -231,7 +234,7 @@ void print_result(struct ptxt *old, struct ptxt *new, struct dp *dp)
     printf("The distance is %d.\n", dp->distance);
     puts(
         "\033[0m==============================================================="
-        "=================");
+        "====================");
     int lidx1 = 0, lidx2 = 0;  // line index
     for (int i = 0; dp->operations[i] != -1; i++) {
         if (dp->operations[i] == 0) {
@@ -245,5 +248,5 @@ void print_result(struct ptxt *old, struct ptxt *new, struct dp *dp)
     }
     puts(
         "\033[0m==============================================================="
-        "=================");
+        "====================");
 }
