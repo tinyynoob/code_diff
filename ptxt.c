@@ -14,7 +14,7 @@
 #define min(a, b) ((a) < (b) ? (a) : (b))
 #define strlen(s) mystrlen(s)
 
-#define UNALIGNED32(X) ((uint32_t)(X) & (sizeof(uint32_t) - 1))
+#define UNALIGNED32(X) ((uint32_t)(uintptr_t)(X) & (sizeof(uint32_t) - 1))
 #define DETECT_NULL(X) (((X) -0x01010101) & ~(X) &0x80808080)
 
 static inline size_t mystrlen(const char *s)
@@ -36,6 +36,8 @@ static inline size_t mystrlen(const char *s)
     return d;
 }
 
+/* Replace the first newline character with '\0'.
+ */
 static inline void replace_endl(char *s)
 {
     int d = 0;
@@ -102,7 +104,7 @@ void ptxt_init(const char *pathname)
         p->hash[i] = str_hash(p->text[i]);
     }
     fclose(f);
-    pthread_exit(p);
+    pthread_exit((void *) p);
 }
 
 /* Allocate struct dp.

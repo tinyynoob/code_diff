@@ -15,10 +15,10 @@ int main(int argc, char *argv[])
     }
     pthread_t pthd[2];
     struct ptxt *old, *new;
-    pthread_create(&pthd[0], NULL, ptxt_init, argv[1]);
-    pthread_create(&pthd[1], NULL, ptxt_init, argv[2]);
-    pthread_join(pthd[0], &old);
-    pthread_join(pthd[1], &new);
+    pthread_create(&pthd[0], NULL, (void *(*) (void *) ) ptxt_init, argv[1]);
+    pthread_create(&pthd[1], NULL, (void *(*) (void *) ) ptxt_init, argv[2]);
+    pthread_join(pthd[0], (void **) &old);
+    pthread_join(pthd[1], (void **) &new);
 #if DEBUG
     puts("Both are joined.");
 #endif
