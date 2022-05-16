@@ -1,3 +1,55 @@
-abc
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 
-5
+struct people
+{
+    char name[50];
+    struct people *next;
+    struct people *prior;
+};
+struct node{
+	char node_name[MAXLENGTH];
+	struct node *next;
+    struct node *prior;
+};
+struct people *add_people(struct people *people,char name[]){
+    struct people *new;
+    new = malloc(sizeof(struct people));
+
+    if(new == NULL){
+        printf("Error:Not enough space for new one.");
+        exit(0);
+    }
+
+    strcpy(new->name,name);
+    new->prior = people;
+    
+    return new;
+}
+
+int main(void)
+{
+    struct people *first = NULL;
+
+    int npeople;
+    scanf("%d",&npeople);
+
+    for(int i = 0;i < npeople; i++){
+        char name[50];
+        scanf("%s",name);
+
+        add_people(first,name);
+    }
+
+    for(int j = 1;j < npeople;j++){
+		struct people *pre = first->prior;
+		pre->next = first;
+		first = first->prior;
+	}
+    //debug -> show link list
+    for(int i = 0;i< npeople;i++){
+        printf("name: %s\n",first->name);
+		first = first->next;
+    }
+}

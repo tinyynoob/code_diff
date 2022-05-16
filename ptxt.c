@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>  // strdup
 
-#define DEBUG 1
+#define DEBUG 0
 #if DEBUG
 #include <errno.h>
 #endif
@@ -66,7 +66,7 @@ static inline int replace_endl(char *s)
     return ret;
 }
 
-// may be choosed better
+// the hash function may be choosed better
 uint32_t str_hash(const char *s)
 {
     uint32_t ans = 0;
@@ -77,7 +77,7 @@ uint32_t str_hash(const char *s)
         ans -= (uint32_t) s[4 * i + len & 3] << 21 | (ans & 0xFFu) << 5;
     }
     for (size_t i = len & ~0x3u; i < len; i++) {
-        ans -= s[i] << (7 * i);
+        ans -= (uint32_t) s[i] << (7 * i);
         ans = ans >> 16 | ans << 16;
     }
     ans ^= (uint32_t) s[len >> 2] << 29 | (uint32_t) s[len >> 1] << 19 |
@@ -89,26 +89,36 @@ void ptxt_init(const char *pathname)
 {
     struct ptxt *p = (struct ptxt *) malloc(sizeof(struct ptxt));
     p->pathname = strdup(pathname);
+
     FILE *f = fopen(p->pathname, "r");
-    p->line = 0;  // to contain the line with EOF
-    char instr[MAXLEN];
-    while (fgets(instr, MAXLEN, f)) // determine p->line, may overestimate 1
+    p->line = 1;  // to contain the line with EOF
+    char instr[MAXLEN]; // buffer
+    while (fgets(
+        instr, MAXLEN,
+        f))  // determine p->line, may overestimate 1 if EOF not in a new line
         p->line++;
     fclose(f);
-#if DEBUG
-    printf("I am %lu, my p->line is %d.\n", pthread_self(), p->line);
-#endif
     p->text = (char **) malloc(sizeof(char *) * p->line);
     p->hash = (uint32_t *) malloc(sizeof(uint32_t) * p->line);
 
     f = fopen(p->pathname, "r");
-    for (int i = 0; i < p->line; i++) {
-        fgets(instr, MAXLEN, f);
+    int i = 0, newline = 1;
+    while (fgets(instr, MAXLEN, f)) {
+        newline = replace_endl(instr);
         p->text[i] = strdup(instr);
-        replace_endl(p->text[i]);
         p->hash[i] = str_hash(p->text[i]);
+        i++;
+    }
+    if (newline) {  // last line is empty, containing only EOF
+        p->text[i] = strdup("");
+        p->hash[i] = str_hash(p->text[i]);
+    } else {  // line number was overestimated
+        p->line--;
     }
     fclose(f);
+#if DEBUG
+    printf("I am %lu, my p->line is %d.\n", pthread_self(), p->line);
+#endif
     pthread_exit((void *) p);
 }
 

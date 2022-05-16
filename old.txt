@@ -1,2 +1,150 @@
-abc
-1
+#include<stdio.h>
+#include<string.h>
+#include<stdlib.h>
+
+#define MAXLENGTH 50
+#define DEBUG 0
+
+struct node{
+	char node_name[MAXLENGTH];
+	struct node *next;
+    struct node *prior;
+};
+
+int main(){
+	
+	int number_of_node = 0;
+	scanf("%d", &number_of_node);
+	
+	/*use structure array store data*/
+	
+    struct node *first = NULL;
+    
+
+	struct node *course[number_of_node];
+	for(int i = 0 ; i < number_of_node ; i++){
+		
+		course[i] = malloc(sizeof(struct node));
+		scanf("%s", course[i]->node_name);
+		
+		if(!i)first = course[i]; 
+		else if(i == (number_of_node - 1)){
+            first->next = course[i];
+            first = course[i];
+            first->next = course[0];
+        }
+        else{
+        	first->next = course[i];
+		} 
+		
+		#if DEBUG
+        printf("%s\n", course[i]->node_name);
+        #endif
+        
+		if(!i)	course[i]->prior = first;
+		else	course[i]->prior = course[i-1];
+		
+		#if DEBUG	
+        printf("course[%d]->prior->node_name %s\n", i,course[i]->prior->node_name);
+        printf("first %s\n", first->node_name);
+        #endif
+        
+        if(i < number_of_node-1 )first = course[i];
+        else {
+        	first =  course[0];
+        	first->prior = course[i];
+		}
+	}
+	
+	#if DEBUG
+    puts("end construct node");
+	#endif
+	
+	/*check link list*/
+	#if DEBUG
+	struct node *t = malloc(sizeof(struct node));
+    int cc = 0;
+    for(t = first ; t ; t = t->next ){
+    	printf("next temp %s\n", t->node_name);
+        cc++;
+        if(cc == number_of_node+2)break;
+	}
+	cc = 0;
+	for(t = first ; t ; t = t->prior ){
+    	printf("prior temp %s\n", t->node_name);
+        cc++;
+        if(cc == number_of_node+2)break;
+	}
+	#endif
+	
+#if DEBUG
+    puts("end link node");
+#endif
+	
+	/*n p q*/
+	struct node *temp_con;
+    temp_con = first;
+    struct node *follow;
+    follow = first;
+    int jump;
+    char check[MAXLENGTH];
+    scanf("%d", &jump);
+    scanf("%s", check);
+    int clock = 0;
+    
+    if(!strcmp(check, "COUNTERCLOCKWISE")){
+        clock = 1;
+    }
+    
+	for(int i = 0 ; i < (number_of_node - 1) ; i++){
+        struct node *temp_d;
+        temp_d = temp_con;
+		if(!clock){
+            for(int i = 0;i < jump;i++)
+                temp_d = temp_d->next;
+            
+            temp_con = temp_d->next;
+            follow = temp_d->prior;
+            follow->next = temp_con;
+            temp_con->prior = follow;
+            printf("%s KILLED\n", temp_d->node_name);
+            
+            #if DEBUG
+	    	cc = 0;
+	    	printf("%s temp_con\n", temp_con->node_name);
+	    	printf("%s follow\n", follow->node_name);
+	    	printf("%s follow->next->nodename\n", follow->next->node_name);
+		    for(t = first ; t ; t = t->next ){
+		    	printf("next temp %s\n", t->node_name);
+		        cc++;
+		        if(cc == number_of_node+2)break;
+			}
+			#endif
+            
+        }
+        else{
+            for(int i = 0;i < jump;i++){
+                temp_d = temp_d->prior;
+            }
+            temp_con = temp_d->prior;
+            follow = temp_d->next;
+            follow->prior = temp_con;
+            temp_con->next = follow;
+            printf("%s KILLED\n", temp_d->node_name);
+            #if DEBUG
+	    	cc = 0;
+			for(t = first ; t ; t = t->prior ){
+		    	printf("prior temp %s\n", t->node_name);
+		        cc++;
+		        if(cc == number_of_node+2)break;
+			}
+			#endif
+        }
+        if(!strcmp(temp_con->node_name, temp_con->next->node_name)){
+        	printf("%s SURVIVE\n", temp_con->node_name);
+        	break;
+		}
+	}
+	if(number_of_node == 1)
+		printf("%s SURVIVE\n", first->node_name);
+}
