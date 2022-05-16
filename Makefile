@@ -5,11 +5,11 @@ header = ptxt.h
 
 .PHONY: run format clean
 
-run: code_diff
-	./code_diff old.txt new.txt
-
 code_diff: $(source)
 	$(cc) -o $@ $^ $(ccflags)
+
+run: code_diff
+	./code_diff old.txt new.txt
 
 format: $(source) $(header)
 	clang-format -i $^

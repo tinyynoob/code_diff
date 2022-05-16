@@ -5,11 +5,12 @@
 #include <stdlib.h>
 #include <string.h>  // strdup
 
-#define DEBUG 0
+#define DEBUG 1
 #if DEBUG
 #include <errno.h>
 #endif
 
+#define MAXLEN 256  // maximum length of a single input line
 
 #define min(a, b) ((a) < (b) ? (a) : (b))
 #define strlen(s) mystrlen(s)
@@ -37,14 +38,17 @@ static inline size_t mystrlen(const char *s)
 }
 
 /* Replace the first newline character with '\0'.
+ * If there is the newline character, return 1, else return 0.
  */
-static inline void replace_endl(char *s)
+static inline int replace_endl(char *s)
 {
     int d = 0;
     while (UNALIGNED32(s + d)) {
-        if (s[d] == '\n' || s[d] == '\0') {
+        if (s[d] == '\n') {
             s[d] = '\0';
-            return;
+            return 1;
+        } else if (s[d] == '\0') {
+            return 0;
         } else {
             d++;
         }
@@ -57,7 +61,9 @@ static inline void replace_endl(char *s)
     }
     while (s[d] != '\n' && s[d] != '\0')
         d++;
+    int ret = s[d] == '\n';
     s[d] = '\0';
+    return ret;
 }
 
 // may be choosed better
@@ -84,12 +90,10 @@ void ptxt_init(const char *pathname)
     struct ptxt *p = (struct ptxt *) malloc(sizeof(struct ptxt));
     p->pathname = strdup(pathname);
     FILE *f = fopen(p->pathname, "r");
-    p->line = 1;  // to contain the line with EOF
-    int c;
-    while ((c = fgetc(f)) != EOF) {
-        if (c == '\n')
-            p->line++;
-    }
+    p->line = 0;  // to contain the line with EOF
+    char instr[MAXLEN];
+    while (fgets(instr, MAXLEN, f)) // determine p->line, may overestimate 1
+        p->line++;
     fclose(f);
 #if DEBUG
     printf("I am %lu, my p->line is %d.\n", pthread_self(), p->line);
@@ -99,10 +103,8 @@ void ptxt_init(const char *pathname)
 
     f = fopen(p->pathname, "r");
     for (int i = 0; i < p->line; i++) {
-        size_t n = 0;
-        p->text[i] = NULL;
-        ssize_t ret =
-            getline(&p->text[i], &n, f);  // getline() auto allocates space
+        fgets(instr, MAXLEN, f);
+        p->text[i] = strdup(instr);
         replace_endl(p->text[i]);
         p->hash[i] = str_hash(p->text[i]);
     }
